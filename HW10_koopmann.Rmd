@@ -1,0 +1,70 @@
+---
+title: "HM10_koopmann"
+author: "Michael Koopmann"
+date: "4/20/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r accidents}
+library(dplyr) 
+library(ggplot2)
+accidents = read.csv("https://raw.githubusercontent.com/yumouqiu/DS202-Spring2022/main/Practice/data/fars2016/accident.csv")
+people = read.csv("https://raw.githubusercontent.com/yumouqiu/DS202-Spring2022/main/Practice/data/fars2016/person.csv")
+```
+
+## Part 1
+
+```{r pressure, echo=FALSE}
+days <- accidents %>%
+  group_by(DAY_WEEK) %>% 
+  mutate(Count = n())
+
+ggplot(days, aes(x = DAY_WEEK)) + geom_bar(stat="Count") 
+```
+Accidents seem to be higher the closer you are to the weekends.  Specifically Day 1, 6 and 7.
+
+```{r}
+hours <- accidents %>%
+  group_by(HOUR) %>% 
+  mutate(Count = n())
+
+ggplot(hours, aes(x = HOUR)) + geom_bar(stat="Count") + xlim(0,24)
+```
+Accidents are most likely to happen during the late afternoon.  Specifically hours between 15-23 which would be 3pm to 11pm.
+
+```{r}
+drunks <- accidents %>%
+  count(DRUNK_DR >0) 
+print(drunks)
+```
+There are 8720 accidents with at least one drunk driver
+
+## Part 2
+
+```{r}
+drivers <- people %>%
+  filter(PER_TYP==1)
+
+combine <- merge(x = accidents, y = drivers, by=c("STATE","ST_CASE", "VE_FORMS", "COUNTY", "DAY", "MONTH", "HOUR", "MINUTE", "RUR_URB", "FUNC_SYS", "HARM_EV", "MAN_COLL", "SCH_BUS"), all = TRUE)
+
+temp <- combine %>% group_by(DAY_WEEK, HOUR, SEX) %>% tally()
+
+```
+
+```{r}
+ggplot(temp, aes(x=HOUR, y=n, fill = SEX)) + geom_bar(stat='identity', position='dodge') + xlim(0,24) + labs(title = "Accidents by HOUR, SEX, and DAY", y = "Count") + facet_wrap(~DAY_WEEK)
+```
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
